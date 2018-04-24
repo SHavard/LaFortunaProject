@@ -1,5 +1,6 @@
 #include "lcd.h"
 #include <stdlib.h>
+#include <util/delay.h>
 
 #define BG GREEN
 #define HOLE_HEIGHT LCDHEIGHT / 8
@@ -17,6 +18,14 @@ const rectangle centre = {LCDHEIGHT/2 - HOLE_WIDTH/2, LCDHEIGHT/2 + HOLE_WIDTH/2
 const rectangle top = {LCDHEIGHT/2 - HOLE_WIDTH/2, LCDHEIGHT/2 + HOLE_WIDTH/2, 10, 10 + HOLE_HEIGHT};
 const rectangle bottom = {LCDHEIGHT/2 - HOLE_WIDTH/2, LCDHEIGHT/2 + HOLE_WIDTH/2, LCDWIDTH-10-HOLE_HEIGHT, LCDWIDTH-10};
 
+struct Board {
+  uint8_t leftMole : 1;
+  uint8_t rightMole : 1;
+  uint8_t topMole : 1;
+  uint8_t bottomMole : 1;
+  uint8_t centreMole : 1;
+} game_board;
+
 void main(void)
 {
   init_lcd();
@@ -28,7 +37,8 @@ void main(void)
   for (;;){
     
     int random = rand() % 5;
-    // drawMole(random);
+    drawMole(random);
+    _delay_ms(100);
     
   }
 }
@@ -46,6 +56,12 @@ void init_game(void)
   drawHole(top);
   /* bottom mole hole */
   drawHole(bottom);
+  
+  game_board.leftMole=0;
+  game_board.rightMole=0;
+  game_board.topMole=0;
+  game_board.bottomMole=0;
+  game_board.centreMole=0;
 }
 
 void background(uint16_t colour)
@@ -58,60 +74,64 @@ void drawHole(rectangle r)
   rectangle hole_border = {r.left - 4, r.right + 4, r.top - 4, r.bottom + 4};
   rectangle hole_w = {r.left, r.right, r.top + 10, r.bottom - 10};
   rectangle hole_h = {r.left + 10, r.right - 10, r.top, r.bottom};
-  fill_rectangle(hole_border, BROWN);
+  fill_rectangle(hole_border, SANDY_BROWN);
   fill_rectangle(hole_w, BLACK);
   fill_rectangle(hole_h, BLACK);
 }
 
 void drawMole(uint8_t hole){
-  rectangle r;
+  rectangle r = {0,0,0,0};
   switch (hole){
     /*left*/
     case 0: {
-      r.left = 8;
-      r.right = 8+HOLE_WIDTH+2;
-      r.top = (LCDWIDTH/2 - (HOLE_HEIGHT)/2)-2;
-      r.bottom = (LCDWIDTH/2 - (HOLE_HEIGHT)/2)+HOLE_HEIGHT+2;
-      fill_rectangle(r, RED); 
+      if (game_board.leftMole==1){
+        break;
+      }
+      game_board.leftMole=1;
+      r = left;
       break;
     }
     /*right*/
     case 1: {
-      r.left = LCDHEIGHT - (HOLE_WIDTH) - 10;
-      r.right = LCDHEIGHT - (HOLE_WIDTH) - 8 + HOLE_WIDTH;
-      r.top = (LCDWIDTH/2 - (HOLE_HEIGHT)/2)-2;
-      r.bottom = (LCDWIDTH/2 - (HOLE_HEIGHT)/2)+HOLE_HEIGHT+2;
-      fill_rectangle(r, ORANGE); 
+      if (game_board.rightMole==1){
+        break;
+      }
+      game_board.rightMole=1;
+      r = right;
       break;
     }
     /*top*/
     case 2:  {
-      r.left = LCDHEIGHT/2 - (HOLE_WIDTH)/2 -2;
-      r.right = LCDHEIGHT/2 - (HOLE_WIDTH)/2 + HOLE_WIDTH +2;
-      r.top = 8;
-      r.bottom = 10+HOLE_HEIGHT;
-      fill_rectangle(r, BLACK); 
+      if (game_board.topMole==1){
+        break;
+      }
+      game_board.topMole=1;
+      r = top;
       break;
     }
     /*bottom*/
     case 3:  {
-      r.left = LCDHEIGHT/2 - (HOLE_WIDTH)/2 -2;
-      r.right = LCDHEIGHT/2 - (HOLE_WIDTH)/2 + HOLE_WIDTH +2;
-      r.top = LCDWIDTH - HOLE_HEIGHT - 12;
-      r.bottom = LCDWIDTH - 10;
-      fill_rectangle(r, PURPLE); 
+      if (game_board.bottomMole==1){
+        break;
+      }
+      game_board.bottomMole=1;
+      r = bottom;
       break;
     }
     /*centre*/
     case 4:  {
-      r.left = LCDHEIGHT/2 - (HOLE_WIDTH)/2 -2;
-      r.right = LCDHEIGHT/2 - (HOLE_WIDTH)/2 + HOLE_WIDTH +2;
-      r.top = (LCDWIDTH/2 - (HOLE_HEIGHT)/2)-2;
-      r.bottom = (LCDWIDTH/2 - (HOLE_HEIGHT)/2)+HOLE_HEIGHT+2;
-      fill_rectangle(r, BLUE); 
+      if (game_board.centreMole==1){
+        break;
+      }
+      game_board.centreMole=1;
+      r = centre;
       break;
     }
   }
+  
+  rectangle body = {r.left + HOLE_WIDTH/4, r.right - HOLE_WIDTH/4, r.top - 10, r.bottom - 10};
+  fill_rectangle(body, BROWN);
+  
 }
 
 
