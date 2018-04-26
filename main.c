@@ -1,6 +1,9 @@
 #include "lcd.h"
 #include <stdlib.h>
 #include <util/delay.h>
+#include "ruota.h"
+#include <avr/io.h>
+#include <avr/interrupt.h>
 
 #define BG GREEN
 #define HOLE_HEIGHT LCDHEIGHT / 8
@@ -18,6 +21,8 @@ const rectangle centre = {LCDHEIGHT/2 - HOLE_WIDTH/2, LCDHEIGHT/2 + HOLE_WIDTH/2
 const rectangle top = {LCDHEIGHT/2 - HOLE_WIDTH/2, LCDHEIGHT/2 + HOLE_WIDTH/2, 10, 10 + HOLE_HEIGHT};
 const rectangle bottom = {LCDHEIGHT/2 - HOLE_WIDTH/2, LCDHEIGHT/2 + HOLE_WIDTH/2, LCDWIDTH-10-HOLE_HEIGHT, LCDWIDTH-10};
 
+uint16_t spawn_delay = 500;
+
 struct Board {
   uint8_t leftMole : 1;
   uint8_t rightMole : 1;
@@ -30,15 +35,24 @@ void main(void)
 {
   init_lcd();
   
-  set_frame_rate_hz(100);
-  
   init_game();
   
-  for (;;){
+  /* game loop */
+  for (;;)
+  {
     
+    /* pick a random spawn location */
     int random = rand() % 5;
+
+    /* prevent spawn at location of existing mole */
     drawMole(random);
-    _delay_ms(100);
+    
+    /* variable delay between spawns */
+    int i;
+    for (i = 0; i < spawn_delay/10; i++)
+    {
+      _delay_ms(10);
+    }
     
   }
 }
@@ -62,6 +76,15 @@ void init_game(void)
   game_board.topMole=0;
   game_board.bottomMole=0;
   game_board.centreMole=0;
+  
+  spawn_delay = 500;
+  
+  TCCR0A = _BV(WGM01);
+  TCCR0B = _BV(CS01) | _BV(CS00);
+  
+  OCR0A = (uint8_t)(F_CPU / (64.0 * 1000) - 1);
+  
+  TIMSK0 |= _BV(OCIE0A);
 }
 
 void background(uint16_t colour)
@@ -132,6 +155,11 @@ void drawMole(uint8_t hole){
   rectangle body = {r.left + HOLE_WIDTH/4, r.right - HOLE_WIDTH/4, r.top - 10, r.bottom - 10};
   fill_rectangle(body, BROWN);
   
+}
+
+ISR(TIMER0_COMPA_vect)
+{
+  scan_switches(0);
 }
 
 
